@@ -8,15 +8,15 @@ This repository contains sample blueprints used for testing and demonstrating th
 
 ### Motion-Activated Light/Switch (Daily Update)
 
-- **File**: `blueprints/test_blueprint.yaml`
+- **File**: `blueprints/motion_light_blueprint.yaml`
 - **Description**: A simple blueprint that turns on a light or switch when motion is detected and turns it off when motion stops. This file is updated automatically every day via GitHub Actions to simulate a new version release.
 
 **Quick Import:**
-[![Import Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fluuquangvu%2Fdemo-blueprints%2Fblob%2Fmain%2Fblueprints%2Ftest_blueprint.yaml)
+[![Import Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fluuquangvu%2Fdemo-blueprints%2Fblob%2Fmain%2Fblueprints%2Fmotion_light_blueprint.yaml)
 
 **Manual Import:**
 
-1. Copy the **Raw URL** `https://github.com/luuquangvu/demo-blueprints/raw/main/blueprints/test_blueprint.yaml`.
+1. Copy the **Raw URL** `https://github.com/luuquangvu/demo-blueprints/raw/main/blueprints/motion_light_blueprint.yaml`.
 2. In Home Assistant, go to **Settings** > **Automations & Scenes** > **Blueprints**.
 3. Click **Import Blueprint** (bottom right).
 4. Paste the URL and click **Preview**.

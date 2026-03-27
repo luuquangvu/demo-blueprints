@@ -1,4 +1,4 @@
-name: Update Test Blueprint
+name: Update Blueprints Version
 
 on:
   schedule:
@@ -21,7 +21,7 @@ jobs:
       - name: Update blueprint version and date
         id: update_version
         run: |
-          FILE="blueprints/test_blueprint.yaml"
+          FILE="blueprints/motion_light_blueprint.yaml"
           CURRENT_DATE=$(date +"%Y-%m-%d")
           CURRENT_VERSION=$(grep -oP "^  version: \K[\d\.]+" $FILE)
           IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
@@ -37,7 +37,7 @@ jobs:
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git add blueprints/test_blueprint.yaml
+          git add blueprints/motion_light_blueprint.yaml
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
