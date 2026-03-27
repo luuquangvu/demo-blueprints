@@ -16,7 +16,7 @@ This repository contains sample blueprints used for testing and demonstrating th
 
 **Manual Import:**
 
-1. Copy the **Raw URL** `https://github.com/luuquangvu/demo-blueprints/raw/main/blueprints/motion_light_blueprint.yaml`.
+1. Copy the **Blueprint URL** `https://github.com/luuquangvu/demo-blueprints/blob/main/blueprints/motion_light_blueprint.yaml`.
 2. In Home Assistant, go to **Settings** > **Automations & Scenes** > **Blueprints**.
 3. Click **Import Blueprint** (bottom right).
 4. Paste the URL and click **Preview**.
