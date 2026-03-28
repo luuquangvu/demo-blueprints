@@ -21,27 +21,58 @@ jobs:
       - name: Update blueprint version and date
         id: update_version
         run: |
-          FILE="blueprints/motion_light_blueprint.yaml"
+          FILES=(
+            "blueprints/motion_light_blueprint.yaml"
+          )
+
           CURRENT_DATE=$(date +"%Y-%m-%d")
-          CURRENT_VERSION=$(grep -oP "^  version: \K[\d\.]+" $FILE)
-          IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
-          NEW_PATCH=$((patch + 1))
-          NEW_VERSION="$major.$minor.$NEW_PATCH"
+          COMMIT_MSG_BODY="Updated blueprints:"
 
-          sed -i "s/^  version: .*/  version: $NEW_VERSION/" $FILE
-          sed -i "s/^  last_updated: .*/  last_updated: \"$CURRENT_DATE\"/" $FILE
+          for FILE in "${FILES[@]}"; do
+            echo "Processing $FILE..."
+            if [ ! -f "$FILE" ]; then
+              echo "Warning: $FILE not found, skipping."
+              continue
+            fi
 
-          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
+            CURRENT_VERSION=$(grep -oP "^  version: \K[\d\.]+" "$FILE")
+            if [ -z "$CURRENT_VERSION" ]; then
+              echo "Warning: Version not found in $FILE, skipping."
+              continue
+            fi
+
+            IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
+            NEW_PATCH=$((patch + 1))
+            NEW_VERSION="$major.$minor.$NEW_PATCH"
+
+            sed -i "s/^  version: .*/  version: $NEW_VERSION/" "$FILE"
+            sed -i "s/^  last_updated: .*/  last_updated: \"$CURRENT_DATE\"/" "$FILE"
+
+            COMMIT_MSG_BODY="$COMMIT_MSG_BODY\n- $FILE: $NEW_VERSION ($CURRENT_DATE)"
+            echo "Updated $FILE to version $NEW_VERSION"
+          done
+
+          echo "FILES=${FILES[*]}" >> $GITHUB_OUTPUT
+
+          {
+            echo "COMMIT_MSG_BODY<<EOF"
+            echo -e "$COMMIT_MSG_BODY"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Commit and push changes
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git add blueprints/motion_light_blueprint.yaml
+
+          for FILE in ${{ steps.update_version.outputs.FILES }}; do
+            git add "$FILE"
+          done
+
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Update test blueprint to version ${{ steps.update_version.outputs.NEW_VERSION }}"
+            git commit -m "Update blueprint versions to latest" -m "${{ steps.update_version.outputs.COMMIT_MSG_BODY }}"
             git pull --rebase origin main
             git push origin main
           fi
