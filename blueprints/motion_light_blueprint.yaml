@@ -41,5 +41,4 @@ triggers:
       - "on"
 actions:
   - action: "homeassistant.turn_{{ trigger.to_state.state }}"
-    target:
-      entity_id: !input target_entity
+    target: !input target_entity
