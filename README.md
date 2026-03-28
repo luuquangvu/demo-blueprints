@@ -22,6 +22,14 @@ This repository contains sample blueprints used for testing and demonstrating th
 4. Paste the URL and click **Preview**.
 5. Click **Import Blueprint**.
 
+## Unique Blueprints Collection
+
+Ready to go beyond standard automations? Unlock the true potential of your smart home with my **exclusive collection of custom-built blueprints**.
+
+[**luuquangvu/tutorials**](https://github.com/luuquangvu/tutorials)
+
+These unique, AI-powered solutions are designed to push the boundaries of Home Assistant, featuring high-level integrations-from **Voice Assist intelligence** to **sophisticated smart logic** - that you won't find anywhere else. Transform your home into a truly proactive, intelligent companion today.
+
 ## Automation
 
 This repository uses GitHub Actions to automatically update the version and timestamp of the test blueprint daily. This allows users of the [Blueprints Updater](https://github.com/luuquangvu/blueprints-updater) integration to see the update process in action.
