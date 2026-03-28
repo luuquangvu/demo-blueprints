@@ -1,8 +1,8 @@
-name: Update Blueprints Version
+name: Update Blueprints
 
 on:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "0 */6 * * *"
   workflow_dispatch:
 
 jobs:
@@ -18,14 +18,14 @@ jobs:
           ref: main
           fetch-depth: 1
 
-      - name: Update blueprint version and date
-        id: update_version
+      - name: Change update_id and last_updated
+        id: update_blueprint
         run: |
           FILES=(
             "blueprints/motion_light_blueprint.yaml"
           )
 
-          CURRENT_DATE=$(date +"%Y-%m-%d")
+          CURRENT_DATE=$(date +"%Y-%m-%d %H:%M")
           COMMIT_MSG_BODY="Updated blueprints:"
 
           for FILE in "${FILES[@]}"; do
@@ -35,21 +35,18 @@ jobs:
               continue
             fi
 
-            CURRENT_VERSION=$(grep -oP "^  version: \K[\d\.]+" "$FILE")
-            if [ -z "$CURRENT_VERSION" ]; then
-              echo "Warning: Version not found in $FILE, skipping."
+            if ! grep -q "^  update_id: " "$FILE"; then
+              echo "Warning: update_id not found in $FILE, skipping."
               continue
             fi
 
-            IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
-            NEW_PATCH=$((patch + 1))
-            NEW_VERSION="$major.$minor.$NEW_PATCH"
+            NEW_UUID=$(cat /proc/sys/kernel/random/uuid)
 
-            sed -i "s/^  version: .*/  version: $NEW_VERSION/" "$FILE"
+            sed -i "s/^  update_id: .*/  update_id: $NEW_UUID/" "$FILE"
             sed -i "s/^  last_updated: .*/  last_updated: \"$CURRENT_DATE\"/" "$FILE"
 
-            COMMIT_MSG_BODY="$COMMIT_MSG_BODY\n- $FILE: $NEW_VERSION ($CURRENT_DATE)"
-            echo "Updated $FILE to version $NEW_VERSION"
+            COMMIT_MSG_BODY="$COMMIT_MSG_BODY\n- $FILE: $NEW_UUID ($CURRENT_DATE)"
+            echo "Updated $FILE with ID $NEW_UUID"
           done
 
           echo "FILES=${FILES[*]}" >> $GITHUB_OUTPUT
@@ -65,14 +62,14 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
 
-          for FILE in ${{ steps.update_version.outputs.FILES }}; do
+          for FILE in ${{ steps.update_blueprint.outputs.FILES }}; do
             git add "$FILE"
           done
 
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Update blueprint versions to latest" -m "${{ steps.update_version.outputs.COMMIT_MSG_BODY }}"
+            git commit -m "Update blueprints" -m "${{ steps.update_blueprint.outputs.COMMIT_MSG_BODY }}"
             git pull --rebase origin main
             git push origin main
           fi

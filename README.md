@@ -6,10 +6,10 @@ This repository contains sample blueprints used for testing and demonstrating th
 
 ## Blueprints
 
-### Motion-Activated Light/Switch (Daily Update)
+### Motion-Activated Light/Switch (Frequent Updates)
 
 - **File**: `blueprints/motion_light_blueprint.yaml`
-- **Description**: A simple blueprint that turns on a light or switch when motion is detected and turns it off when motion stops. This file is updated automatically every day via GitHub Actions to simulate a new version release.
+- **Description**: A simple blueprint that turns on a light or switch when motion is detected and turns it off when motion stops. This file is updated frequently via GitHub Actions to simulate new releases.
 
 **Quick Import:**
 [![Import Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fluuquangvu%2Fdemo-blueprints%2Fblob%2Fmain%2Fblueprints%2Fmotion_light_blueprint.yaml)
@@ -32,4 +32,4 @@ These unique, AI-powered solutions are designed to push the boundaries of Home A
 
 ## Automation
 
-This repository uses GitHub Actions to automatically update the version and timestamp of the test blueprint daily. This allows users of the [Blueprints Updater](https://github.com/luuquangvu/blueprints-updater) integration to see the update process in action.
+This repository uses GitHub Actions to automatically update the unique `update_id` (UUID) and timestamp of the test blueprint frequently. This allows users of the [Blueprints Updater](https://github.com/luuquangvu/blueprints-updater) integration to see the update process in action.
