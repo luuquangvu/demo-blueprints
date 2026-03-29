@@ -2,7 +2,7 @@ name: Update Blueprints
 
 on:
   schedule:
-    - cron: "0 */6 * * *"
+    - cron: "0 */12 * * *"
   workflow_dispatch:
 
 jobs:
@@ -25,7 +25,7 @@ jobs:
             "blueprints/motion_light_blueprint.yaml"
           )
 
-          CURRENT_DATE=$(date +"%Y-%m-%d %H:%M")
+          CURRENT_DATE=$(date -u +"%Y-%m-%d %H:%M UTC")
           COMMIT_MSG_BODY="Updated blueprints:"
 
           for FILE in "${FILES[@]}"; do
