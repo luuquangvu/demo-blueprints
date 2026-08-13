@@ -27,8 +27,8 @@ blueprint:
 mode: single
 max_exceeded: silent
 variables:
-  update_id: 75189442-8fc2-434e-b221-5f694dde2174
-  last_updated: "2026-08-12 12:59 UTC"
+  update_id: a0b6b3e6-f550-4113-9838-63561b088856
+  last_updated: "2026-08-13 01:39 UTC"
 
 triggers:
   - trigger: state
