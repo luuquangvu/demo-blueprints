@@ -13,7 +13,7 @@ blueprint:
       selector:
         entity:
           domain: binary_sensor
-          device_class: motion
+          device_class: occupancy
     target_entity:
       name: Target Light/Switch
       description: The light or switch to control.
@@ -27,8 +27,8 @@ blueprint:
 mode: single
 max_exceeded: silent
 variables:
-  update_id: 968db29e-635d-4ba4-9b37-45a73f592103
-  last_updated: "2026-08-27 07:01 UTC"
+  update_id: e240b725-8637-4007-8bcc-7522a9142e2f
+  last_updated: "2026-08-27 10:47 UTC"
 
 triggers:
   - trigger: state

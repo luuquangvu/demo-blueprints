@@ -2,8 +2,24 @@ name: Update Blueprints
 
 on:
   schedule:
-    - cron: "0 */12 * * *"
+    - cron: "0 0 * * *"
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "Simulation mode / Phase"
+        required: true
+        default: "auto"
+        type: choice
+        options:
+          - "auto"
+          - "occupancy_change"
+          - "occupancy_safe"
+          - "motion_change"
+          - "motion_safe"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   update:
@@ -12,64 +28,36 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout main branch
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+      - name: Checkout main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: main
-          fetch-depth: 1
+          persist-credentials: false
 
-      - name: Change update_id and last_updated
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.x"
+
+      - name: Rotate and update blueprint
         id: update_blueprint
         run: |
-          FILES=(
-            "blueprints/motion_light_blueprint.yaml"
-          )
-
-          CURRENT_DATE=$(date -u +"%Y-%m-%d %H:%M UTC")
-          COMMIT_MSG_BODY="Updated blueprints:"
-
-          for FILE in "${FILES[@]}"; do
-            echo "Processing $FILE..."
-            if [ ! -f "$FILE" ]; then
-              echo "Warning: $FILE not found, skipping."
-              continue
-            fi
-
-            if ! grep -q "^  update_id: " "$FILE"; then
-              echo "Warning: update_id not found in $FILE, skipping."
-              continue
-            fi
-
-            NEW_UUID=$(cat /proc/sys/kernel/random/uuid)
-
-            sed -i "s/^  update_id: .*/  update_id: $NEW_UUID/" "$FILE"
-            sed -i "s/^  last_updated: .*/  last_updated: \"$CURRENT_DATE\"/" "$FILE"
-
-            COMMIT_MSG_BODY="$COMMIT_MSG_BODY\n- $FILE: $NEW_UUID ($CURRENT_DATE)"
-            echo "Updated $FILE with ID $NEW_UUID"
-          done
-
-          echo "FILES=${FILES[*]}" >> $GITHUB_OUTPUT
-
-          {
-            echo "COMMIT_MSG_BODY<<EOF"
-            echo -e "$COMMIT_MSG_BODY"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+          MODE="${{ github.event.inputs.mode || 'auto' }}"
+          python scripts/update_blueprint.py "$MODE" "blueprints/motion_light_blueprint.yaml"
 
       - name: Commit and push changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
 
-          for FILE in ${{ steps.update_blueprint.outputs.FILES }}; do
-            git add "$FILE"
-          done
+          git add blueprints/motion_light_blueprint.yaml
 
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Update blueprints" -m "${{ steps.update_blueprint.outputs.COMMIT_MSG_BODY }}"
+            git commit -m "${{ steps.update_blueprint.outputs.COMMIT_TITLE }}" -m "${{ steps.update_blueprint.outputs.COMMIT_BODY }}"
             git pull --rebase origin main
             git push origin main
           fi

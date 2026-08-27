@@ -32,4 +32,11 @@ These unique, AI-powered solutions are designed to push the boundaries of Home A
 
 ## Automation
 
-This repository uses GitHub Actions to automatically update the unique `update_id` (UUID) and timestamp of the test blueprint frequently. This allows users of the [Blueprints Updater](https://github.com/luuquangvu/blueprints-updater) integration to see the update process in action.
+This repository uses GitHub Actions to automatically rotate and update the demo blueprint daily (at 00:00 UTC) across a 4-day simulation cycle:
+
+- **Day 1**: Changes `motion_sensor` selector `device_class` to `occupancy` _(Simulates selector change / breaking update)_
+- **Day 2**: Safe update with new `update_id` (UUID) & timestamp _(Simulates safe release)_
+- **Day 3**: Changes `motion_sensor` selector `device_class` to `motion` _(Simulates selector change / breaking update)_
+- **Day 4**: Safe update with new `update_id` (UUID) & timestamp _(Simulates safe release)_
+
+This allows users and testers of the [Blueprints Updater](https://github.com/luuquangvu/blueprints-updater) integration to experience both normal updates and selector change warnings in action regardless of when they install the blueprint.
