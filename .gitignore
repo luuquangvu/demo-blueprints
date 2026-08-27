@@ -1,0 +1,8 @@
+.venv/
+.vscode/
+__pycache__/
+.ruff_cache/
+node_modules/
+scratch/
+package-lock.json
+uv.lock

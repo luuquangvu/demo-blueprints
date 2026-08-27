@@ -7,11 +7,13 @@ This script manages a 4-day deterministic simulation cycle:
 - Phase 4: Safe update (keeps `motion`, updates `update_id` and timestamp).
 """
 
+import argparse
 import os
 import re
-import sys
+import tempfile
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from pathlib import Path
 
 PHASES = {
     1: {
@@ -43,6 +45,39 @@ MANUAL_MAP = {
     "motion_safe": 4,
 }
 
+BLUEPRINT_SUMMARY = (
+    "A simple blueprint that turns on a light or switch when motion is detected and turns "
+    "it off when motion stops. This file is updated frequently to simulate new releases."
+)
+
+DEVICE_CLASS_PATTERN = re.compile(r"(?m)^(          device_class:[ \t]*)(motion|occupancy)[ \t]*$")
+UPDATE_ID_PATTERN = re.compile(r"(?m)^(  update_id:\s*)[^\r\n]+$")
+LAST_UPDATED_PATTERN = re.compile(r"(?m)^(  last_updated:\s*)[^\r\n]+$")
+DESCRIPTION_PATTERN = re.compile(r"(?ms)^  description:.*?(?=^  author:)")
+
+
+def build_description(phase_title: str, device_class: str, update_id: str, updated_at: str) -> str:
+    """Build the blueprint description and its single current changelog entry."""
+    return (
+        "  description: |-\n"
+        f"    {BLUEPRINT_SUMMARY}\n"
+        "\n"
+        "    Changelog:\n"
+        f"    - {phase_title}\n"
+        f"      device_class: {device_class}\n"
+        f"      update_id: {update_id}\n"
+        f"      updated: {updated_at}"
+    )
+
+
+def replace_description(content: str, description: str) -> str:
+    """Replace the top-level blueprint description, including any old changelog."""
+    replacement = f"{description}\n"
+    updated_content, replacements = DESCRIPTION_PATTERN.subn(replacement, content, count=1)
+    if replacements != 1:
+        raise ValueError("Could not find the top-level blueprint description.")
+    return updated_content
+
 
 def get_phase(mode: str) -> int:
     """Determine the active simulation phase number.
@@ -55,14 +90,14 @@ def get_phase(mode: str) -> int:
         The phase integer (1 through 4).
 
     """
+    if mode == "auto":
+        epoch_days = int(datetime.now(UTC).timestamp() // 86400)
+        return (epoch_days % 4) + 1
     if mode in MANUAL_MAP:
         return MANUAL_MAP[mode]
     if mode.isdigit() and int(mode) in PHASES:
         return int(mode)
-
-    # Auto: Deterministic 4-day rotation based on epoch days
-    epoch_days = int(datetime.now(timezone.utc).timestamp() // 86400)
-    return (epoch_days % 4) + 1
+    raise ValueError(f"Invalid mode '{mode}'. Use auto, 1-4, or a manual phase alias.")
 
 
 def update_blueprint(file_path: str, mode: str = "auto") -> None:
@@ -82,27 +117,53 @@ def update_blueprint(file_path: str, mode: str = "auto") -> None:
     phase_title = phase_info["name"]
 
     new_uuid = str(uuid.uuid4())
-    current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    current_time = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
 
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(f"Target file '{file_path}' does not exist.")
+    target_path = Path(file_path)
+    try:
+        with target_path.open(encoding="utf-8") as f:
+            content = f.read()
+    except FileNotFoundError as exc:
+        raise FileNotFoundError(f"Target file '{file_path}' does not exist.") from exc
 
-    with open(file_path, "r", encoding="utf-8") as f:
-        content = f.read()
-
-    # Update device_class under motion_sensor selector
-    content = re.sub(
-        r"(device_class:\s*)(motion|occupancy)", rf"\g<1>{target_device_class}", content
+    content, replacements = DEVICE_CLASS_PATTERN.subn(
+        rf"\g<1>{target_device_class}", content, count=1
     )
+    if replacements != 1:
+        raise ValueError("Could not find the motion_sensor device_class selector.")
 
-    # Update update_id
-    content = re.sub(r"(update_id:\s*)[^\n]+", rf"\g<1>{new_uuid}", content)
+    content, replacements = UPDATE_ID_PATTERN.subn(rf"\g<1>{new_uuid}", content, count=1)
+    if replacements != 1:
+        raise ValueError("Could not find the blueprint update_id variable.")
 
-    # Update last_updated
-    content = re.sub(r"(last_updated:\s*)[^\n]+", rf'\g<1>"{current_time}"', content)
+    content, replacements = LAST_UPDATED_PATTERN.subn(rf'\g<1>"{current_time}"', content, count=1)
+    if replacements != 1:
+        raise ValueError("Could not find the blueprint last_updated variable.")
 
-    with open(file_path, "w", encoding="utf-8") as f:
-        f.write(content)
+    # Replace the previous changelog in the top-level blueprint description.
+    description = build_description(phase_title, target_device_class, new_uuid, current_time)
+    content = replace_description(content, description)
+
+    target_path = target_path.resolve()
+    temp_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            newline="",
+            dir=target_path.parent,
+            prefix=f".{target_path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as f:
+            temp_path = Path(f.name)
+            f.write(content)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temp_path, target_path)
+    finally:
+        if temp_path is not None:
+            temp_path.unlink(missing_ok=True)
 
     print(f"Updated {file_path}")
     print(f"Phase: {phase_title}")
@@ -111,29 +172,43 @@ def update_blueprint(file_path: str, mode: str = "auto") -> None:
     print(f"Last Updated: {current_time}")
 
     commit_title = f"Update blueprints [{phase_title}]"
-    commit_body = f"- {file_path}: {new_uuid} ({current_time})\n- device_class: {target_device_class}\n- simulation_phase: {phase_title}"
+    commit_body = (
+        f"- {file_path}: {new_uuid} ({current_time})\n"
+        f"- device_class: {target_device_class}\n"
+        f"- simulation_phase: {phase_title}"
+    )
 
-    # Export variables if running in GitHub Actions
-    github_output = os.environ.get("GITHUB_OUTPUT")
-    if github_output:
+    if github_output := os.environ.get("GITHUB_OUTPUT"):
         with open(github_output, "a", encoding="utf-8") as f:
             f.write(f"COMMIT_TITLE={commit_title}\n")
             f.write(f"PHASE_NAME={phase_title}\n")
             f.write(f"DEVICE_CLASS={target_device_class}\n")
             f.write(f"UPDATE_ID={new_uuid}\n")
             f.write(f"LAST_UPDATED={current_time}\n")
-            f.write("COMMIT_BODY<<EOF\n")
+            f.write(f"CHANGELOG={phase_title}\n")
+            output_delimiter = f"ghadelimiter_{uuid.uuid4().hex}"
+            f.write(f"COMMIT_BODY<<{output_delimiter}\n")
             f.write(f"{commit_body}\n")
-            f.write("EOF\n")
+            f.write(f"{output_delimiter}\n")
 
 
 def main() -> None:
     """Execute the blueprint update CLI entry point."""
-    mode_arg = sys.argv[1] if len(sys.argv) > 1 else "auto"
-    file_arg = (
-        sys.argv[2] if len(sys.argv) > 2 else "blueprints/motion_light_blueprint.yaml"
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "mode",
+        nargs="?",
+        default="auto",
+        help="Simulation mode: auto, 1-4, or a manual phase alias.",
     )
-    update_blueprint(file_arg, mode_arg)
+    parser.add_argument(
+        "file",
+        nargs="?",
+        default="blueprints/motion_light_blueprint.yaml",
+        help="Blueprint YAML file to update.",
+    )
+    args = parser.parse_args()
+    update_blueprint(args.file, args.mode)
 
 
 if __name__ == "__main__":

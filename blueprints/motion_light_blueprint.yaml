@@ -1,6 +1,13 @@
 blueprint:
   name: Motion-Activated Light/Switch (Frequent Updates)
-  description: A simple blueprint that turns on a light or switch when motion is detected and turns it off when motion stops. This file is updated frequently to simulate new releases.
+  description: |-
+    A simple blueprint that turns on a light or switch when motion is detected and turns it off when motion stops. This file is updated frequently to simulate new releases.
+
+    Changelog:
+    - Phase 1/4: Changed device_class to occupancy
+      device_class: occupancy
+      update_id: f6032390-1839-4778-a286-82cf48835d76
+      updated: 2026-08-27 13:55 UTC
   author: luuquangvu
   domain: automation
   source_url: https://github.com/luuquangvu/demo-blueprints/blob/main/blueprints/motion_light_blueprint.yaml
@@ -27,8 +34,8 @@ blueprint:
 mode: single
 max_exceeded: silent
 variables:
-  update_id: e240b725-8637-4007-8bcc-7522a9142e2f
-  last_updated: "2026-08-27 10:47 UTC"
+  update_id: f6032390-1839-4778-a286-82cf48835d76
+  last_updated: "2026-08-27 13:55 UTC"
 
 triggers:
   - trigger: state
