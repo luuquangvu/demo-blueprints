@@ -4,10 +4,10 @@ blueprint:
     A simple blueprint that turns on a light or switch when motion is detected and turns it off when motion stops. This file is updated frequently to simulate new releases.
 
     Changelog:
-    - Phase 3/4: Changed device_class to motion
+    - Phase 4/4: Safe update (device_class: motion)
       device_class: motion
-      update_id: b5af42b0-ebde-4146-bdb8-3eb8328ae287
-      updated: 2026-11-09 03:36 UTC
+      update_id: c00fac6f-2343-47b5-9f77-5abcfc1d76b1
+      updated: 2026-11-10 05:08 UTC
   author: luuquangvu
   domain: automation
   source_url: https://github.com/luuquangvu/demo-blueprints/blob/main/blueprints/motion_light_blueprint.yaml
@@ -34,8 +34,8 @@ blueprint:
 mode: single
 max_exceeded: silent
 variables:
-  update_id: b5af42b0-ebde-4146-bdb8-3eb8328ae287
-  last_updated: "2026-11-09 03:36 UTC"
+  update_id: c00fac6f-2343-47b5-9f77-5abcfc1d76b1
+  last_updated: "2026-11-10 05:08 UTC"
 
 triggers:
   - trigger: state
